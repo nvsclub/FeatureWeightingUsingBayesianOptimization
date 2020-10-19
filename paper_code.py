@@ -37,8 +37,8 @@ target_variable = 'target'
 neighbor_samples_ratio = 0.05
 train_validation_split = 0.75
 train_test_split = 0.75
-n_iterations = 10
-offset_iterations = 0
+n_iterations = 100
+offset_iterations = 165
 
 # Loading datasets
 dsets = {}
@@ -151,19 +151,10 @@ elif task == 'Classification':
 
 # Defining the methods
 ## Filter
-### Eliminate low variance features
-def variance_threshold_filter(dataset, threshold = 0.8):
-    feature_set = dataset.drop(target_variable, axis = 1)
-    sel = VarianceThreshold(threshold=(threshold * (1 - threshold)))
-    sel.fit(feature_set)
-    features_idx = sel.get_support()
-    features = feature_set.columns[features_idx]
-    return dataset[features], features
-
 ### Eliminate high intercorrelation features
 def intercorrelation_filter(dataset, threshold = 0.8):
     feature_set = dataset.drop(target_variable, axis = 1)
-    corr_matrix = abs(feature_set.corr())
+    corr_matrix = abs(feature_set.corr()) 
     target_corr_matrix = abs(dataset.corr())
     high_intercorrelations = corr_matrix > threshold
     features = list(corr_matrix)
@@ -306,20 +297,20 @@ def backwards_selection(clf, dataset, minimum_improvement_perc = 0.01):
             best_performer = results[max(results, key=results.get)]
             selected_features.remove(max(results, key=results.get))
             feature_set.drop(selected_features[-1], axis = 1)
-            if len(list(feature_set)) == 0:
+            if len(list(feature_set)) == 1:
                 return dataset[selected_features], selected_features
         else:
             return dataset[selected_features], selected_features
 
 ### Stepwise selection
 def stepwise_selection(clf, dataset, minimum_improvement_perc = 0.01, initial_perc = 0.5):
-    feature_set = dataset.drop(target_variable, axis = 1)
+    remaining_feature_set = list(dataset.drop(target_variable, axis = 1))
     train_set = dataset.iloc[:int(train_validation_split * len(dataset))]
     test_set = dataset.iloc[int(train_validation_split * len(dataset)):]
     
-    selected_features = random.sample(list(feature_set), int(len(list(feature_set)) * initial_perc))
+    selected_features = random.sample(remaining_feature_set, int(len(remaining_feature_set) * initial_perc))
     for feature in selected_features:
-        feature_set.drop(feature, axis = 1)
+        remaining_feature_set.remove(feature)
 
     best_performer = -9999999999
     if task in ['Regression', 'R']:
@@ -338,7 +329,7 @@ def stepwise_selection(clf, dataset, minimum_improvement_perc = 0.01, initial_pe
             elif task in ['Regression', 'R']:
                 results.update({feature : -mean_squared_error(clf.predict(test_set[selected_features_test]), test_set[target_variable])})
 
-        for feature in feature_set:
+        for feature in remaining_feature_set:
             clf.fit(train_set[selected_features + [feature]], train_set[target_variable])
             if task in ['Classification', 'C']:
                 results.update({feature : accuracy_score(clf.predict(test_set[selected_features + [feature]]), test_set[target_variable])})
@@ -350,10 +341,11 @@ def stepwise_selection(clf, dataset, minimum_improvement_perc = 0.01, initial_pe
             selected_feature = max(results, key=results.get)
             if selected_feature in selected_features:
                 selected_features.remove(selected_feature)
+                remaining_feature_set.append(selected_feature)
             else:
                 selected_features.append(selected_feature)
-            feature_set.drop(selected_features[-1], axis = 1)
-            if len(list(feature_set)) == 0:
+                remaining_feature_set.remove(selected_feature)
+            if len(list(remaining_feature_set)) == 0:
                 return dataset[selected_features], selected_features
         else:
             return dataset[selected_features], selected_features
@@ -476,25 +468,12 @@ for iteration in tqdm(range(offset_iterations, offset_iterations+n_iterations)):
         # Get baselines
         ## KNN simple
         performance = get_validation_result(clf, dataset, list(dataset.drop(target_variable, axis = 1)))
-        results.append([dataset_index, 'knn', 'all'] + performance + [0, 0])
+        results.append([dataset_index, '001 knn', '000 all'] + performance + [0, 0])
         results_detailed.append([dataset_index, '001 knn', '000 all'] + performance + [0, 0] + [True for _ in dataset_features])
         ## RF simple
         performance = get_validation_result(clf2, dataset, list(dataset.drop(target_variable, axis = 1)))
-        results.append([dataset_index, 'rf', 'all'] + performance + [0, 0])
+        results.append([dataset_index, '000 rf', '000 all'] + performance + [0, 0])
         results_detailed.append([dataset_index, '000 rf', '000 all'] + performance + [0, 0] + [True for _ in dataset_features])
-
-        # Variance
-        ## Ignoring data set where errors occur
-        try:
-            timer0 = time()
-            _, features = variance_threshold_filter(split_dataset, threshold = 0.8)
-            timer0 = time() - timer0
-            performance = get_validation_result(clf, dataset, features)
-            results.append([dataset_index, '001 knn', '001 variance threshold'] + performance + [timer0, 0])
-            results_detailed.append([dataset_index, '001 knn', '001 variance threshold'] + performance + [timer0, 0] + boolean_converter(features, dataset_features))
-        except:
-            results.append([dataset_index, '001 knn', '001 variance threshold'] + [-1, -1, -1, 0])
-            results_detailed.append([dataset_index, '001 knn', '001 variance threshold'] + [-1, -1, -1, 0] + [False for _ in dataset_features])
 
         # Intercorrelation
         if task == 'Regression':

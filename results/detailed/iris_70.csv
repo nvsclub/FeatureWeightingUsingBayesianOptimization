@@ -1,0 +1,13 @@
+,dataset,base,method,PM1,PM2,Time,TriesToOpt,sepal length (cm),sepal width (cm),petal length (cm),petal width (cm)
+0,iris,001 knn,000 all,0.9473684210526315,0.9473684210526315,0.0,0,True,True,True,True
+1,iris,000 rf,000 all,1.0,1.0,0.0,0,True,True,True,True
+2,iris,001 knn,003 feature importance selection,0.868421052631579,0.868421052631579,0.13916563987731934,0,False,True,False,True
+3,iris,001 knn,011 feature importance weighting,1.0,1.0,0.13916563987731934,0,0.12379717712741733,0.02451508715369403,0.44248742010157116,0.4092003156173174
+4,iris,001 knn,004 l1,1.0,1.0,0.012051820755004883,0,False,False,True,True
+5,iris,001 knn,005 relieff selection,1.0,1.0,0.03317141532897949,0,True,True,False,True
+6,iris,001 knn,012 relieff weighting,1.0,1.0,0.03317141532897949,0,0.17741935483870963,0.30645161290322576,0.0,0.3467741935483871
+7,iris,001 knn,006 forward selection,0.2631578947368421,0.2631578947368421,0.973452091217041,0,False,False,True,False
+8,iris,001 knn,007 backward selection,1.0,1.0,0.823495626449585,0,False,True,True,True
+9,iris,001 knn,008 stepwise selection,1.0,1.0,0.9479575157165527,0,False,True,True,True
+10,iris,001 knn,009 bayesian selection,1.0,1.0,27.638218879699707,0,True,True,True,True
+11,iris,001 knn,013 bayesian weighting,1.0,1.0,71.28850293159485,0,0.7219622462406273,0.24695056120394843,0.479458633102422,0.5128624023382365
