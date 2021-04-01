@@ -317,7 +317,7 @@ for _, row in psdf.iterrows():
 
 results = []
 for cycle_id in range(n_iterations):
-    for task_id in benchmark_suite.tasks:  # iterate over all tasks
+    for task_id in tqdm(benchmark_suite.tasks):  # iterate over all tasks
             
             if (cycle_id, task_id) in already_processed:
                 continue
